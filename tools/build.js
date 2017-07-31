@@ -182,6 +182,10 @@ function copyRootTest() {
   return copy(`${process.cwd()}/src/root.spec.js`, `${process.cwd()}/dist/root.spec.js`);
 }
 
+function copyNpmIgnore() {
+  return copy(`${process.cwd()}/.npmignore`, `${process.cwd()}/dist/packages-dist/.npmignore`);
+}
+
 function measure(module, gzip = true) {
   const path = `${process.cwd()}/dist/packages-dist/bundles/${module}.umd.js`;
   const file = readFileSync(path);
@@ -199,6 +203,10 @@ function buildModule(name, globals) {
     .switchMap(() => replaceVersionsObservable(name, VERSIONS));
 }
 
+/**
+ * Create an observable of module build status. This method builds
+ * @param {Object} globals 
+ */
 function buildModules(globals) {
   const core$ = buildModule('core', globals);
   const auth$ = buildModule('auth', globals);
@@ -220,7 +228,8 @@ function buildLibrary(globals) {
   const modules$ = buildModules(globals);
   return Observable
     .forkJoin(modules$)
-    .switchMap(() => Observable.from(createTestUmd(globals)));
+    .switchMap(() => Observable.from(createTestUmd(globals)))
+    .switchMap(() => Observable.from(copyNpmIgnore()));
 }
 
 buildLibrary(GLOBALS).subscribe(
